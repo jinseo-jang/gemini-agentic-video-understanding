@@ -23,43 +23,81 @@ For further background on the underlying research and benchmarks, see the offici
 
 ---
 
-## Architecture
+## Agentic Video API Usage
 
+Using Agentic Video Understanding in the official `google-genai` SDK is straightforward. Specify `media_processing="agentic"` when creating the video `Part`:
+
+```python
+from google import genai
+from google.genai import types
+
+# 1. Initialize Client (Vertex AI or Gemini Developer API)
+client = genai.Client(
+    vertexai=True,
+    project="your-gcp-project-id",
+    location="global",  # Gemini 3.7 Flash requires 'global'
+)
+
+# 2. Build Video Part with Agentic Processing
+# Supports YouTube URLs, Cloud Storage (gs://), or inline raw bytes
+video_part = types.Part(
+    file_data=types.FileData(
+        file_uri="https://www.youtube.com/watch?v=LzExSq9DU9w",
+        mime_type="video/mp4",
+    ),
+    media_processing="agentic",  # Use "static" for standard baseline
+)
+
+# 3. Call Gemini 3.7 Flash with Thinking Budget
+response = client.models.generate_content(
+    model="gemini-3.7-flash",
+    contents=[
+        video_part,
+        "Summarize the key announcements in this video with timestamps.",
+    ],
+    config=types.GenerateContentConfig(
+        thinking_config=types.ThinkingConfig(
+            thinking_level=types.ThinkingLevel.LOW,  # minimal, low, medium, high
+            include_thoughts=True,
+        )
+    ),
+)
+
+# 4. Extract Detailed Token Telemetry
+usage = response.usage_metadata
+print(f"Prompt Tokens (In):     {usage.prompt_token_count}")
+print(f"Tool Tokens (Frames):   {usage.tool_use_prompt_token_count}")
+print(f"Thinking Tokens:        {usage.thoughts_token_count}")
+print(f"Candidate Tokens (Out): {usage.candidates_token_count}")
+print(f"Total Tokens:           {usage.total_token_count}")
+print(f"\nResponse:\n{response.text}")
 ```
-+-----------------------------------------------------------------------------------+
-| Frontend: React + Vite + Tailwind CSS SPA                                         |
-|                                                                                   |
-|  [TopNav: Title | Mode Pill | API Status Badge | Settings Modal]                  |
-|  +---------------------------+-------------------------------------------------+  |
-|  | Left Input Panel          | Right Side-by-Side Comparison Panel             |  |
-|  | - Video Preset Selector   | - Baseline Card (Static, Gray, Tokens breakdown)|  |
-|  | - Video Preview Player    | - Agentic Card (Agentic, Blue, Tokens breakdown)|  |
-|  | - Prompt & Preset Ideas   | - Floating Total Token Reduction Callout        |  |
-|  | - Thinking Level Selector | - Independent Real-Time Stopwatches             |  |
-|  | - Start Analysis Action   |                                                 |  |
-|  +---------------------------+-------------------------------------------------+  |
-+----------------------------------------+------------------------------------------+
-                                         | HTTP REST API
-                                         v
-+-----------------------------------------------------------------------------------+
-| Backend: FastAPI (Python 3.13 / Uvicorn on 0.0.0.0:8000)                          |
-|                                                                                   |
-|  - GET  /api/health            -> Service health status                           |
-|  - GET  /api/settings          -> Active provider & credential status             |
-|  - GET  /api/preset            -> Video metadata for demo clips                   |
-|  - GET  /api/preset/video      -> Stream local MP4 (HTTP 206 Range supported)     |
-|  - POST /api/analyze           -> Dual parallel generation via asyncio.gather     |
-|  - Static Files Mount (/)      -> Serves compiled frontend/dist SPA               |
-+-----------------------------------------------------------------------------------+
-                                         | google-genai SDK (v1beta1)
-                                         v
-+-----------------------------------------------------------------------------------+
-| Google GenAI Platform (Gemini 3.7 Flash)                                          |
-| - Gemini Developer API (API Key) OR Vertex AI (ADC / Project / global location)   |
-| - Baseline: media_processing="static"                                             |
-| - Agentic:  media_processing="agentic"                                            |
-+-----------------------------------------------------------------------------------+
-```
+
+### Static vs Agentic Processing Modes
+
+| Feature | Static Mode (`media_processing="static"`) | Agentic Mode (`media_processing="agentic"`) |
+| :--- | :--- | :--- |
+| **Frame Ingestion** | Uniformly samples video at 1 FPS into initial prompt | Low-framerate initial overview, queries frames on demand |
+| **Input Prompt Tokens** | Proportional to video duration (~250-300 tokens/sec) | Minimal upfront (~200-300 tokens), plus dynamic tool tokens |
+| **Tool Calling** | Disabled | Internal video navigation and frame inspection tools |
+| **Optimal Use Case** | Short clips (under 1 minute), fixed-overview tasks | Long-form video (10m to 1h+), needle-in-a-haystack search |
+
+---
+
+## Token Savings Dynamics: Video Duration & Thinking Levels
+
+Token savings between Static and Agentic modes depend on two key factors:
+
+### 1. Video Duration Impact
+- **Short Clips (under 2 minutes)**: In static mode, a 1-minute clip costs ~15,000 prompt tokens. Agentic mode uses fewer prompt tokens, but tool queries and thoughts represent a larger relative fraction of total tokens. Total savings are modest.
+- **Long-Form Video (10 minutes to 1+ hour)**: In static mode, a 10-minute video consumes ~150,000 prompt tokens and a 1-hour video consumes 900,000+ prompt tokens. In agentic mode, upfront prompt tokens stay under 300 tokens, and the model only fetches the specific frames it needs. This produces **90% to 99%+ input prompt token reduction**, leading to dramatic latency and cost benefits.
+
+### 2. Thinking Budget (`thinking_level`) Impact
+- Thinking tokens are counted as reasoning outputs (`thoughts`), separate from input `prompt` tokens.
+- **Input Prompt Token Reduction**: Remains consistently high (90% to 99%+) regardless of the thinking level because the video ingestion mechanism is unchanged.
+- **Total Token Reduction**: Varies with the thinking budget:
+  - `minimal` / `low`: Constrains reasoning tokens, maximizing overall token reduction and minimizing latency.
+  - `medium` / `high`: Grants the model deeper reasoning capacity to cross-reference multiple timestamps and synthesize complex answers, which increases thought token count while maintaining prompt token savings.
 
 ---
 
@@ -102,9 +140,31 @@ Click the **Gear icon** in the top navigation bar to enter your Gemini API Key o
 
 ---
 
-## Testing
+## Testing & CLI Benchmark
 
-### Backend Unit Tests
+### 1. Standalone CLI Benchmark Script (`scripts/test_agentic_video.py`)
+You can measure token savings directly from the command line without launching the web server. The script supports local MP4 files, Google Cloud Storage URIs (`gs://`), and YouTube URLs:
+
+```bash
+# Basic run in Agentic mode (default 5-minute demo video)
+./.venv/bin/python3 scripts/test_agentic_video.py
+
+# Benchmark a YouTube video side by side (Static vs Agentic)
+./.venv/bin/python3 scripts/test_agentic_video.py \
+  --video "https://www.youtube.com/watch?v=LzExSq9DU9w" \
+  --prompt "Summarize the key topic of this video in 2 sentences." \
+  --mode both \
+  --thinking-level low
+
+# Benchmark a local video with custom thinking level
+./.venv/bin/python3 scripts/test_agentic_video.py \
+  --video data/cache/sports_match_10m.mp4 \
+  --prompt "At what timestamp does the opening goal happen?" \
+  --mode both \
+  --thinking-level medium
+```
+
+### 2. Backend Unit Tests
 Run the pytest suite covering API contracts, video streaming, credentials, and token accounting:
 
 ```bash

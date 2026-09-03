@@ -5,10 +5,10 @@
   # 1. 기본 실행 (Agentic 모드)
   ./.venv/bin/python3 scripts/test_agentic_video.py
 
-  # 2. Static vs Agentic 나란히 비교 실행
-  ./.venv/bin/python3 scripts/test_agentic_video.py --mode both
+  # 2. YouTube URL로 실행 (Static vs Agentic 나란히 비교)
+  ./.venv/bin/python3 scripts/test_agentic_video.py --video "https://www.youtube.com/watch?v=LzExSq9DU9w" --mode both --thinking-level low
 
-  # 3. 사고 강도(thinking-level) 제한 테스트 (minimal, low, medium, high)
+  # 3. 사고 강도(thinking-level) 설정 (minimal, low, medium, high)
   ./.venv/bin/python3 scripts/test_agentic_video.py --thinking-level low
 
   # 4. 다른 비디오 및 프롬프트 지정
@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -150,7 +152,19 @@ def print_comparison_table(static_res: dict, agentic_res: dict):
 
 
 def build_video_part(video_source: str, mode: str) -> types.Part:
-    """비디오 소스(GCS 또는 로컬 파일)에 맞춰 types.Part를 빌드합니다."""
+    """비디오 소스(YouTube URL, GCS 또는 로컬 파일)에 맞춰 types.Part를 빌드합니다."""
+    # 1. YouTube URL 지원
+    if "youtube.com" in video_source.lower() or "youtu.be" in video_source.lower():
+        print(f"🔗 YouTube 비디오 감지: {video_source}")
+        return types.Part(
+            file_data=types.FileData(
+                file_uri=video_source,
+                mime_type="video/mp4",
+            ),
+            media_processing=mode,
+        )
+
+    # 2. GCS URI 지원
     if video_source.startswith("gs://"):
         return types.Part(
             file_data=types.FileData(
@@ -160,6 +174,7 @@ def build_video_part(video_source: str, mode: str) -> types.Part:
             media_processing=mode,
         )
 
+    # 3. 로컬 파일
     video_path = Path(video_source)
     if not video_path.exists():
         alt_path = Path(__file__).resolve().parent.parent / video_source
@@ -188,7 +203,7 @@ def main():
     parser.add_argument(
         "--video",
         default="data/cache/behind_the_scenes_pixel.mp4",
-        help="로컬 mp4 파일 경로 또는 gs:// URI (기본: 5분 Pixel 영상)",
+        help="로컬 mp4 파일 경로, YouTube URL 또는 gs:// URI (기본: 5분 Pixel 영상)",
     )
     parser.add_argument(
         "--prompt",
@@ -220,16 +235,38 @@ def main():
 
     args = parser.parse_args()
 
-    # GenAI Client 초기화
-    client = genai.Client(
-        vertexai=True,
-        project=args.project,
-        location=args.location,
-    )
+    # Project & Auth 해석
+    project_id = args.project or os.environ.get("GOOGLE_CLOUD_PROJECT")
+    if not project_id and shutil.which("gcloud"):
+        try:
+            res = subprocess.run(
+                ["gcloud", "config", "get-value", "project"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if res.returncode == 0:
+                val = res.stdout.strip()
+                if val and val != "(unset)":
+                    project_id = val
+        except Exception:
+            pass
+
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not project_id and api_key:
+        client = genai.Client(api_key=api_key)
+        auth_desc = "Gemini Developer API (GEMINI_API_KEY)"
+    else:
+        client = genai.Client(
+            vertexai=True,
+            project=project_id,
+            location=args.location,
+        )
+        auth_desc = f"Vertex AI (프로젝트: {project_id}, 리전: {args.location})"
 
     print("\n" + "#" * 70)
     print("🎬 Gemini 3.7 Flash Video Understanding 토큰 벤치마크")
-    print(f"• 프로젝트: {args.project} (리전: {args.location})")
+    print(f"• 인증: {auth_desc}")
     print(f"• 대상 비디오: {args.video}")
     print(f"• 프롬프트: {args.prompt}")
     print(f"• 사고 강도: {args.thinking_level.upper()}")
