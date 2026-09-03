@@ -1,22 +1,22 @@
 # Gemini 3.7 Flash Video Benchmark: Static vs Agentic Processing
 
-A full-stack, real-time benchmark application comparing **Gemini 3.7 Flash** in **Static Video Understanding** (`media_processing="static"`) versus **Agentic Video Understanding** (`media_processing="agentic"`).
+A web application for benchmarking **Gemini 3.7 Flash** in **Static Video Understanding** (`media_processing="static"`) against **Agentic Video Understanding** (`media_processing="agentic"`).
 
 ---
 
-## 🌟 Overview
+## Overview
 
-Google Cloud's **Gemini 3.7 Flash** introduces **Agentic Video Understanding**, allowing the model to autonomously inspect and navigate video frames using adaptive tool calls rather than uniformly sampling the entire video upfront into prompt tokens.
+In **Agentic Video Understanding**, Gemini 3.7 Flash inspects and navigates video frames on demand through internal tool calls, rather than uniformly sampling the entire video into input tokens up front.
 
-This application provides a side-by-side comparison interface to benchmark:
-- **Token Efficiency**: Compares total tokens, prompt tokens, tool use frame tokens, and thought tokens.
-- **Latency & Wall-Clock Timing**: Independent real-time stopwatches tracking generation speed.
-- **Thinking Intensity**: Configurable thinking levels (`minimal`, `low`, `medium`, `high`).
-- **Response Quality**: Formatted Markdown outputs showing extracted information and timestamps.
+This application benchmarks the two approaches side by side:
+- **Token Usage**: Compares total, prompt, tool frame, and thinking tokens.
+- **Latency**: Measures wall-clock execution time with independent timers.
+- **Thinking Budget**: Tests configurable thinking levels (`minimal`, `low`, `medium`, `high`).
+- **Extraction Quality**: Displays timestamps and descriptions returned by each mode.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 +-----------------------------------------------------------------------------------+
@@ -56,25 +56,25 @@ This application provides a side-by-side comparison interface to benchmark:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - **Python**: 3.10 or higher
 - **Node.js**: 18 or higher (with `npm`)
 
 ### 1. Launch with Unified Runner (`run.sh`)
-The repository includes a single executable runner (`run.sh`) that automates virtual environment creation, dependency installation, frontend compilation, and server startup:
+The `run.sh` script sets up the Python virtual environment, installs backend and frontend dependencies, compiles the frontend, and starts the server:
 
 ```bash
 ./run.sh
 ```
 
-The application will build the frontend bundle and start the FastAPI server on:
+The application builds the frontend bundle and starts the FastAPI server on:
 - **Web UI**: [http://localhost:8000](http://localhost:8000)
 - **Health Endpoint**: [http://localhost:8000/api/health](http://localhost:8000/api/health)
 
 ### 2. Configure Credentials
-You can provide credentials either via environment variables or directly in the Web UI:
+Set credentials through environment variables or directly in the Web UI:
 
 #### Option A: Vertex AI (Recommended)
 ```bash
@@ -91,21 +91,21 @@ export GEMINI_API_KEY="your-gemini-api-key"
 ```
 
 #### Option C: In-App Settings Modal
-Click the **Gear icon** in the top navigation bar to enter your Gemini API Key or Vertex AI Project ID on the fly.
+Click the **Gear icon** in the top navigation bar to enter your Gemini API Key or Vertex AI Project ID.
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Backend Unit Tests
-Run the 59 automated test suites covering API contracts, preset streaming, credential resolution, and token telemetry:
+Run the pytest suite covering API contracts, video streaming, credentials, and token accounting:
 
 ```bash
 PYTHONPATH=. .venv/bin/pytest backend/tests -v
 ```
 
-### End-to-End Headless Browser Verification
-Run the Playwright-driven end-to-end browser verification suite:
+### End-to-End Browser Tests
+Run the Playwright headless browser test suite:
 
 ```bash
 ./tests/e2e/run_headless_e2e.sh
@@ -113,7 +113,7 @@ Run the Playwright-driven end-to-end browser verification suite:
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 .
@@ -155,5 +155,5 @@ Run the Playwright-driven end-to-end browser verification suite:
 
 ---
 
-## 📄 License
+## License
 This project is licensed under the Apache License, Version 2.0.
