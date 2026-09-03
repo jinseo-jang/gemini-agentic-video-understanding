@@ -354,24 +354,25 @@ async def test_build_video_part_gcs_developer_api_raises_400():
 
 
 @pytest.mark.asyncio
-async def test_build_video_part_youtube_vertex_ai_raises_400():
-    """Verify YouTube URL on Vertex AI raises HTTP 400."""
+async def test_build_video_part_youtube_vertex_ai_supported():
+    """Verify YouTube URL on Vertex AI is passed as file_data with mime_type='video/mp4'."""
     mock_client = MagicMock()
+    yt_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     request = AnalyzeRequest(
-        video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        video_url=yt_url,
         video_source_type="youtube",
         prompt="Test YouTube",
     )
 
-    with pytest.raises(HTTPException) as exc_info:
-        await build_video_part(
-            client=mock_client,
-            provider="vertex_ai",
-            request=request,
-            media_processing="static",
-        )
-    assert exc_info.value.status_code == 400
-    assert exc_info.value.detail["error"] == "unsupported_provider_uri"
+    part = await build_video_part(
+        client=mock_client,
+        provider="vertex_ai",
+        request=request,
+        media_processing="agentic",
+    )
+    assert part.file_data is not None
+    assert part.file_data.file_uri == yt_url
+    assert "AGENTIC" in str(part.media_processing).upper()
 
 
 @pytest.mark.asyncio
@@ -394,5 +395,6 @@ async def test_build_video_part_youtube_developer_api_supported():
     )
     assert part.file_data is not None
     assert part.file_data.file_uri == yt_url
+    assert part.file_data.mime_type == "video/mp4"
 
 

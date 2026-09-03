@@ -239,15 +239,7 @@ async def prepare_video_payload(
     # 3. Custom YouTube URLs
     is_youtube = "youtube.com" in clean_url.lower() or "youtu.be" in clean_url.lower()
     if is_youtube or source_type == "youtube":
-        if provider == "vertex_ai":
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "error": "unsupported_provider_uri",
-                    "message": "YouTube URLs are not supported on Vertex AI endpoints. Please switch to Gemini Developer API with an API Key in Settings or select the preset demo video.",
-                },
-            )
-        return VideoPayload(mode="file", file_uri=clean_url, mime_type=None)
+        return VideoPayload(mode="file", file_uri=clean_url, mime_type="video/mp4")
 
     # 4. Custom HTTP/HTTPS URLs
     if clean_url.startswith("http://") or clean_url.startswith("https://"):

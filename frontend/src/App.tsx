@@ -11,7 +11,6 @@ import {
   TokenSavings,
   VideoPreset,
   VideoSourceType,
-  resolveActiveProvider,
 } from './types';
 import { DEFAULT_PRESETS } from './data/presets';
 import { fetchPresets, fetchSettings, runAnalysis } from './services/api';
@@ -167,8 +166,6 @@ export const App: React.FC = () => {
     setIsRunning(false);
   };
 
-  const activeProvider = resolveActiveProvider(customCredentials, apiSettings);
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between">
       <div className="max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
@@ -215,8 +212,6 @@ export const App: React.FC = () => {
               isRunning={isRunning}
               onStartAnalysis={handleStartAnalysis}
               onCancelAnalysis={handleCancelAnalysis}
-              activeProvider={activeProvider}
-              onOpenSettings={() => setIsSettingsOpen(true)}
             />
           </div>
 

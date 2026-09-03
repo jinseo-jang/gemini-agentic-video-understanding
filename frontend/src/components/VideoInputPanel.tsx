@@ -7,8 +7,6 @@ import {
   Sparkles,
   Film,
   FileVideo,
-  AlertTriangle,
-  ArrowRight,
   Brain,
 } from 'lucide-react';
 import { ThinkingLevel, VideoPreset, VideoSourceType } from '../types';
@@ -29,8 +27,6 @@ interface VideoInputPanelProps {
   isRunning: boolean;
   onStartAnalysis: () => void;
   onCancelAnalysis: () => void;
-  activeProvider?: 'gemini_api_key' | 'vertex_ai' | 'none';
-  onOpenSettings?: () => void;
 }
 
 export const VideoInputPanel: React.FC<VideoInputPanelProps> = ({
@@ -47,16 +43,11 @@ export const VideoInputPanel: React.FC<VideoInputPanelProps> = ({
   isRunning,
   onStartAnalysis,
   onCancelAnalysis,
-  activeProvider,
-  onOpenSettings,
 }) => {
   const [activeTab, setActiveTab] = useState<'presets' | 'custom'>('presets');
   const [customInputUrl, setCustomInputUrl] = useState<string>('');
 
-  const isYouTubeOnVertex =
-    videoSourceType === 'youtube' && activeProvider === 'vertex_ai';
-  const isStartDisabled =
-    !videoUrl || !prompt.trim() || isYouTubeOnVertex || isRunning;
+  const isStartDisabled = !videoUrl || !prompt.trim() || isRunning;
 
   const handleCustomUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,14 +94,6 @@ export const VideoInputPanel: React.FC<VideoInputPanelProps> = ({
               }`}
             >
               <span>YouTube / URL</span>
-              {activeProvider === 'vertex_ai' && (
-                <span
-                  className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 rounded"
-                  title="YouTube URLs require Gemini Developer API"
-                >
-                  Dev API only
-                </span>
-              )}
             </button>
           </div>
         </div>
@@ -160,27 +143,6 @@ export const VideoInputPanel: React.FC<VideoInputPanelProps> = ({
           </div>
         ) : (
           <div className="mb-3">
-            {activeProvider === 'vertex_ai' && (
-              <div className="p-2.5 mb-2.5 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-[11px]">YouTube URLs require Gemini Developer API</p>
-                  <p className="text-[10px] text-amber-800 mt-0.5 leading-normal">
-                    Vertex AI only supports direct video files (MP4, GCS). For seamless testing, switch to the <strong>Presets</strong> tab or enter a direct MP4 link.
-                  </p>
-                  {onOpenSettings && (
-                    <button
-                      type="button"
-                      onClick={onOpenSettings}
-                      className="mt-1 text-[10px] font-semibold text-amber-900 underline hover:text-amber-950 flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>Switch to Gemini API Key in Settings</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
             <form onSubmit={handleCustomUrlSubmit} className="flex gap-2">
               <div className="relative flex-1">
                 <input
@@ -247,17 +209,10 @@ export const VideoInputPanel: React.FC<VideoInputPanelProps> = ({
               </button>
             </div>
 
-            {isYouTubeOnVertex ? (
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200/90 px-2.5 py-1 rounded-md mt-2 w-fit">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                <span>YouTube URLs cannot be analyzed with Vertex AI. Please switch to Developer API or select a preset.</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md mt-2 w-fit">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                <span>Video ready for benchmark</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md mt-2 w-fit">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              <span>Video ready for benchmark</span>
+            </div>
           </div>
         )}
       </div>
@@ -386,12 +341,9 @@ export const VideoInputPanel: React.FC<VideoInputPanelProps> = ({
                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                 : 'bg-slate-900 hover:bg-slate-800 text-white active:scale-[0.99] cursor-pointer hover:shadow-lg'
             }`}
-            title={isYouTubeOnVertex ? 'YouTube URLs are not supported on Vertex AI' : undefined}
           >
             <Play className="w-4 h-4 fill-white" />
-            <span>
-              {isYouTubeOnVertex ? 'YouTube Unsupported on Vertex AI' : 'Start analysis'}
-            </span>
+            <span>Start analysis</span>
           </button>
         )}
       </div>
