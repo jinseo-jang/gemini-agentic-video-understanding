@@ -10,13 +10,16 @@ A web application for benchmarking **Gemini 3.7 Flash** in **Static Video Unders
 
 ## Overview
 
-In **Agentic Video Understanding**, Gemini 3.7 Flash inspects and navigates video frames on demand through internal tool calls, rather than uniformly sampling the entire video into input tokens up front.
+In **Agentic Video Understanding**, Gemini 3.7 Flash inspects and navigates video frames on demand through internal tool calls, rather than uniformly sampling the entire video into input tokens up front. As highlighted in the [Google DeepMind announcement](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-agentic-video-in-gemini/), pairing the model's reasoning with dynamic video inspection tools reduces token consumption by up to 88% and lowers costs while improving retrieval accuracy, especially for long-form content.
 
 This application benchmarks the two approaches side by side:
 - **Token Usage**: Compares total, prompt, tool frame, and thinking tokens.
 - **Latency**: Measures wall-clock execution time with independent timers.
 - **Thinking Budget**: Tests configurable thinking levels (`minimal`, `low`, `medium`, `high`).
 - **Extraction Quality**: Displays timestamps and descriptions returned by each mode.
+
+For further background on the underlying research and benchmarks, see the official announcement:
+- [Introducing Agentic Video Understanding in Gemini (Google Blog)](https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-agentic-video-in-gemini/)
 
 ---
 

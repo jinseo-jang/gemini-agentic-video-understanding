@@ -94,11 +94,17 @@ Verifies mathematical correctness of token savings, latency reporting, and telem
    - Baseline total: `total == prompt + candidates + thoughts`
    - Agentic total: `total == prompt + candidates + thoughts`
    - Input reduction formula:
-     $$\text{input\_reduction\_percent} = \frac{\text{baseline.prompt} - \text{agentic.prompt}}{\text{baseline.prompt}} \times 100$$
+     ```text
+     input_reduction_percent = ((baseline.prompt - agentic.prompt) / baseline.prompt) * 100
+     ```
    - Total reduction formula:
-     $$\text{total\_reduction\_percent} = \frac{\text{baseline.total} - \text{agentic.total}}{\text{baseline.total}} \times 100$$
+     ```text
+     total_reduction_percent = ((baseline.total - agentic.total) / baseline.total) * 100
+     ```
    - Prompt tokens saved:
-     $$\text{prompt\_tokens\_saved} = \text{baseline.prompt} - \text{agentic.prompt}$$
+     ```text
+     prompt_tokens_saved = baseline.prompt - agentic.prompt
+     ```
 2. **Latency Verification**:
    - `execution_time_seconds > 0.0`
    - Type is `float` or numeric representation.
