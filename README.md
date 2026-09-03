@@ -2,6 +2,10 @@
 
 A web application for benchmarking **Gemini 3.7 Flash** in **Static Video Understanding** (`media_processing="static"`) against **Agentic Video Understanding** (`media_processing="agentic"`).
 
+<p align="center">
+  <img src="docs/images/demo_screenshot.png" alt="Gemini 3.7 Flash Video Benchmark Preview" width="100%">
+</p>
+
 ---
 
 ## Overview
@@ -109,48 +113,6 @@ Run the Playwright headless browser test suite:
 
 ```bash
 ./tests/e2e/run_headless_e2e.sh
-```
-
----
-
-## Project Structure
-
-```
-.
-├── backend/
-│   ├── app/
-│   │   ├── main.py                  # FastAPI application entry point & static mounting
-│   │   ├── config.py                # Environment configuration & credential resolution
-│   │   ├── routers/
-│   │   │   ├── analyze.py           # Dual static/agentic analysis endpoint
-│   │   │   ├── health.py            # Service health checks
-│   │   │   ├── preset.py            # Demo video metadata & HTTP 206 streaming
-│   │   │   └── settings.py          # Credential status & configuration endpoints
-│   │   ├── schemas/                 # Pydantic request/response schemas
-│   │   └── services/
-│   │       ├── genai_client.py      # GenAI client factory & authentication
-│   │       ├── preset_service.py    # Demo video caching & byte streaming
-│   │       └── video_analyzer.py    # Core analysis runner & token math
-│   ├── requirements.txt             # Python backend dependencies
-│   └── tests/                       # Pytest backend test suite
-├── frontend/
-│   ├── src/
-│   │   ├── components/              # React components (SxS Cards, Callout, Controls)
-│   │   ├── services/                # Backend API client
-│   │   ├── types/                   # TypeScript interface definitions
-│   │   ├── App.tsx                  # Main layout container
-│   │   └── main.tsx                 # React entry point
-│   ├── package.json                 # Frontend dependencies & build scripts
-│   └── vite.config.ts               # Vite build configuration
-├── scripts/
-│   └── test_agentic_video.py        # Standalone CLI benchmarking utility
-├── tests/
-│   ├── adversarial/                 # Edge-case & stress test suite
-│   └── e2e/                         # Headless browser & contract E2E tests
-├── data/cache/                      # Local video cache directory
-├── run.sh                           # Unified runner script
-├── PROJECT.md                       # Architectural details and interface contracts
-└── README.md                        # Documentation
 ```
 
 ---

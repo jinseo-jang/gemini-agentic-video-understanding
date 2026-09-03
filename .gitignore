@@ -78,6 +78,7 @@ application_default_credentials.json
 # Temporary Screenshots & Internal Artifacts
 # ==========================================
 *.png
+!docs/images/*.png
 .agents/
 
 # ==========================================
